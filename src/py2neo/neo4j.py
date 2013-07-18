@@ -1973,8 +1973,8 @@ class Index(rest.Resource):
             ))
         else:
             raise TypeError("Illegal parameter combination for index removal")
-
-    def query(self, query):
+        
+    def query(self, query, order=None):
         """ Query the index according to the supplied query criteria, returning
         a list of matched entities::
 
@@ -1987,13 +1987,20 @@ class Index(rest.Resource):
         the index being queried. For indexes with default configuration, this
         should be `Apache Lucene query syntax <http://lucene.apache.org/core/old_versioned_docs/versions/3_5_0/queryparsersyntax.html>`_.
         """
-        return [
-            self._content_type(item['self'])
-            for item in self._send(rest.Request(self._graph_db, "GET", "{0}?query={1}".format(
-                self.__uri__, quote(query, "")
-            ))).body
-        ]
-
+        if order is None:
+            return [
+                self._content_type(item['self'])
+                for item in self._send(rest.Request(self._graph_db, "GET", "{0}?query={1}".format(
+                    self.__uri__, quote(query, "")
+                ))).body
+            ]
+        else:
+            return [
+                (self._content_type(item['self']), item['score'])
+                for item in self._send(rest.Request(self._graph_db, "GET", "{0}?query={1}&order={2}".format(
+                    self.__uri__, quote(query, "")
+                ))).body
+            ]
 
 def _cast(obj, cls=(Node, Relationship), abstract=None):
     if obj is None:
